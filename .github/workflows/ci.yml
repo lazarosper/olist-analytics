@@ -1,6 +1,7 @@
 name: CI
 
-# Runs on every pull request to main, before the change can reach production.
+# Runs on every pull request to main. The check is required by the branch
+# protection rule on main, so a change cannot be merged until it passes.
 #
 #   1. lint        sqlfluff on every SQL file of the dbt project
 #   2. dbt build   builds and tests the whole project in an isolated schema,
@@ -11,10 +12,6 @@ name: CI
 on:
   pull_request:
     branches: [main]
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "powerbi/**"
 
 concurrency:
   group: ci-${{ github.event.pull_request.number }}
