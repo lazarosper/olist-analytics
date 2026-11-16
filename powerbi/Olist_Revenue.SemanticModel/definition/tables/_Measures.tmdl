@@ -1,0 +1,147 @@
+table _Measures
+	lineageTag: 91e0759f-fd66-5697-8b75-d202cac57570
+
+	column Value
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 0b602473-5441-5378-b5c1-c820e4a43af6
+		summarizeBy: none
+		sourceColumn: [Value]
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Price of the items in orders that became a sale. The rule lives in dbt (column net_revenue); this is only a sum.
+	measure 'Net Revenue' = SUM ( 'Order Items'[Net Revenue] )
+		formatString: \R\$ #,0
+		displayFolder: Revenue
+		lineageTag: 47a9c472-22a1-56a5-8afe-6c84c215ff30
+
+	/// Number of distinct orders that became a sale. Counted on the item fact so it also filters by product and seller.
+	measure Orders = CALCULATE ( DISTINCTCOUNT ( 'Order Items'[Order ID] ), 'Order Items'[Is Revenue Order] = TRUE () )
+		formatString: #,0
+		displayFolder: Revenue
+		lineageTag: d13d9099-64d1-50bb-8d33-5e75a6b46cbc
+
+	/// Net revenue divided by the number of orders.
+	measure 'Average Order Value' = DIVIDE ( [Net Revenue], [Orders] )
+		formatString: \R\$ #,0.00
+		displayFolder: Revenue
+		lineageTag: 13410b30-307d-5a28-b19d-632679fd6c46
+
+	/// Number of items (order lines) in orders that became a sale.
+	measure 'Items Sold' = CALCULATE ( COUNTROWS ( 'Order Items' ), 'Order Items'[Is Revenue Order] = TRUE () )
+		formatString: #,0
+		displayFolder: Revenue
+		lineageTag: da7a185d-650a-58b8-be2c-a53be8f1fef4
+
+	/// Freight charged on the items of orders that became a sale. Not part of net revenue.
+	measure Freight = CALCULATE ( SUM ( 'Order Items'[Freight Value] ), 'Order Items'[Is Revenue Order] = TRUE () )
+		formatString: \R\$ #,0
+		displayFolder: Revenue
+		lineageTag: b224567a-bf35-51a9-bcee-1d708de8d214
+
+	/// Net revenue of the same period one year earlier.
+	measure 'Net Revenue PY' = CALCULATE ( [Net Revenue], SAMEPERIODLASTYEAR ( 'Date'[Date] ) )
+		formatString: \R\$ #,0
+		displayFolder: Revenue
+		lineageTag: 87ddcbfd-1226-51af-9afb-97d5c5109d20
+
+	/// Growth of net revenue against the same period one year earlier.
+	measure 'Net Revenue YoY %' = DIVIDE ( [Net Revenue] - [Net Revenue PY], [Net Revenue PY] )
+		formatString: 0.0%
+		displayFolder: Revenue
+		lineageTag: 5713be02-3bab-51ac-a39b-ae7dfd7f7a6b
+
+	/// Net revenue, shown only for the ten best-selling categories in the current selection.
+	measure 'Net Revenue (Top 10 Categories)' =
+			VAR CategoryPosition = RANKX ( ALLSELECTED ( Products[Category] ), [Net Revenue], , DESC )
+			RETURN
+				IF ( CategoryPosition <= 10, [Net Revenue] )
+		formatString: \R\$ #,0
+		displayFolder: Revenue
+		lineageTag: 2cf3d31e-fb40-5876-86af-9ddf381cd548
+
+	/// Number of distinct customers with at least one order that became a sale.
+	measure Customers = CALCULATE ( DISTINCTCOUNT ( 'Order Items'[Customer Key] ), 'Order Items'[Is Revenue Order] = TRUE () )
+		formatString: #,0
+		displayFolder: Customers
+		lineageTag: 5e2c35fc-52ab-58ac-b9b7-4e28c4314149
+
+	/// Share of those customers who have placed more than one order in their lifetime.
+	measure 'Repeat Customer %' = DIVIDE ( CALCULATE ( [Customers], Customers[Is Repeat Customer] = TRUE () ), [Customers] )
+		formatString: 0.0%
+		displayFolder: Customers
+		lineageTag: a3cc44d1-0bad-5004-80b8-4922f1730976
+
+	/// Number of orders that reached the customer.
+	measure 'Delivered Orders' = CALCULATE ( COUNTROWS ( Orders ), Orders[Is Delivered] = TRUE () )
+		formatString: #,0
+		displayFolder: Delivery
+		lineageTag: 781a8da0-f2f9-54aa-8096-f15def89041d
+
+	/// Number of orders delivered after the promised date.
+	measure 'Late Orders' = CALCULATE ( COUNTROWS ( Orders ), Orders[Is Late Delivery] = TRUE () )
+		formatString: #,0
+		displayFolder: Delivery
+		lineageTag: 64c076a3-02b8-5b0f-9d4d-c9ef3ccb03ee
+
+	/// Late orders divided by delivered orders.
+	measure 'Late Delivery %' = DIVIDE ( [Late Orders], [Delivered Orders] )
+		formatString: 0.0%
+		displayFolder: Delivery
+		lineageTag: 6efcf6e9-42ae-5ca8-914a-bcf8b9ba1d73
+
+	/// Average number of days between purchase and delivery, for delivered orders.
+	measure 'Avg Days to Deliver' = AVERAGE ( Orders[Days To Deliver] )
+		formatString: 0.0
+		displayFolder: Delivery
+		lineageTag: 12b276db-b8c9-5dc6-afcb-ab6214135553
+
+	/// Net revenue of the orders that were delivered late.
+	measure 'Net Revenue Delivered Late' = CALCULATE ( SUM ( Orders[Net Revenue] ), Orders[Is Late Delivery] = TRUE () )
+		formatString: \R\$ #,0
+		displayFolder: Delivery
+		lineageTag: 0438d4ee-2049-5238-b0be-b08f9c0dca41
+
+	/// Number of orders that have a review score.
+	measure 'Reviewed Orders' = COUNT ( Orders[Review Score] )
+		formatString: #,0
+		displayFolder: Satisfaction
+		lineageTag: 6730f89d-d701-5253-a22c-b1c905f16c3c
+
+	/// Average review score (1 to 5) of the reviewed orders.
+	measure 'Avg Review Score' = AVERAGE ( Orders[Review Score] )
+		formatString: 0.00
+		displayFolder: Satisfaction
+		lineageTag: 5b93000c-249c-5261-b32c-af11e597cf41
+
+	/// Average review score of orders delivered on time.
+	measure 'Avg Review Score (On time)' = CALCULATE ( [Avg Review Score], Orders[Delivery Status] = "On time" )
+		formatString: 0.00
+		displayFolder: Satisfaction
+		lineageTag: 0a785a39-0547-5b57-92cd-340445f52e8b
+
+	/// Average review score of orders delivered late.
+	measure 'Avg Review Score (Late)' = CALCULATE ( [Avg Review Score], Orders[Delivery Status] = "Late" )
+		formatString: 0.00
+		displayFolder: Satisfaction
+		lineageTag: 8fe22ccc-c410-5894-a57f-4d5bba65ef4e
+
+	/// How many stars a late delivery costs: late average minus on-time average.
+	measure 'Review Score Gap (Late vs On time)' = [Avg Review Score (Late)] - [Avg Review Score (On time)]
+		formatString: 0.00
+		displayFolder: Satisfaction
+		lineageTag: dc840186-2f50-5b4b-a3e0-2250beee2a3f
+
+	/// When the newest row of the item fact landed in the warehouse (UTC).
+	measure 'Data Loaded At' = MAX ( 'Order Items'[Loaded At] )
+		formatString: General Date
+		displayFolder: Info
+		lineageTag: 9d22f60d-0efa-5c1b-9203-a363a48ee60e
+
+	partition _Measures = calculated
+		mode: import
+		source = {0}
+
+	annotation PBI_Id = 5e0d1b7a9c3f4a6e8b2d4f6a8c0e1b3d

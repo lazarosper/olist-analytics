@@ -1,0 +1,98 @@
+table Customers
+	lineageTag: a53efc77-431a-5043-9fdc-7bae05a5e049
+
+	column 'Customer Key'
+		dataType: string
+		isHidden
+		lineageTag: b71a6964-83bd-5b4e-93e3-6ba240e3bfb5
+		summarizeBy: none
+		sourceColumn: Customer Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Customer ID (Hashed)'
+		dataType: string
+		isHidden
+		lineageTag: 353a524f-001e-53f7-910c-3759992a52c5
+		summarizeBy: none
+		sourceColumn: Customer ID (Hashed)
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Zip Code Prefix'
+		dataType: string
+		lineageTag: 2d579c14-1365-5718-b19d-a82a578e04f0
+		summarizeBy: none
+		sourceColumn: Zip Code Prefix
+
+		annotation SummarizationSetBy = Automatic
+
+	column City
+		dataType: string
+		lineageTag: ac20d312-abbf-5cd7-8f00-db73962045fd
+		summarizeBy: none
+		sourceColumn: City
+
+		annotation SummarizationSetBy = Automatic
+
+	column State
+		dataType: string
+		lineageTag: d0c55ebc-4214-5f5d-aaec-2751da214a7b
+		summarizeBy: none
+		sourceColumn: State
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'First Order At'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 4f01d8f0-2d20-5560-816d-de818c080aec
+		summarizeBy: none
+		sourceColumn: First Order At
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Last Order At'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: b06e83e6-2482-542e-9771-dddfe2457e74
+		summarizeBy: none
+		sourceColumn: Last Order At
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Lifetime Order Count'
+		dataType: int64
+		formatString: 0
+		lineageTag: 9ca19c66-92b9-5390-95f2-f8bbab03880b
+		summarizeBy: none
+		sourceColumn: Lifetime Order Count
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Repeat Customer'
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 466bfb91-7527-5ce8-b8c6-131078397ff4
+		summarizeBy: none
+		sourceColumn: Is Repeat Customer
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Customers = m
+		mode: import
+		source =
+			let
+				Source = Snowflake.Databases(SnowflakeServer, SnowflakeWarehouse, [Role = "REPORTER", Implementation = "2.0"]),
+				Database = Source{[Name = "ANALYTICS_PROD", Kind = "Database"]}[Data],
+				Schema = Database{[Name = "MARTS", Kind = "Schema"]}[Data],
+				Data = Schema{[Name = "DIM_CUSTOMERS", Kind = "Table"]}[Data],
+				Selected = Table.SelectColumns(Data, {"CUSTOMER_KEY", "CUSTOMER_UNIQUE_ID_HASHED", "ZIP_CODE_PREFIX", "CITY", "STATE_CODE", "FIRST_ORDER_AT", "LAST_ORDER_AT", "LIFETIME_ORDER_COUNT", "IS_REPEAT_CUSTOMER"}),
+				Renamed = Table.RenameColumns(Selected, {{"CUSTOMER_KEY", "Customer Key"}, {"CUSTOMER_UNIQUE_ID_HASHED", "Customer ID (Hashed)"}, {"ZIP_CODE_PREFIX", "Zip Code Prefix"}, {"CITY", "City"}, {"STATE_CODE", "State"}, {"FIRST_ORDER_AT", "First Order At"}, {"LAST_ORDER_AT", "Last Order At"}, {"LIFETIME_ORDER_COUNT", "Lifetime Order Count"}, {"IS_REPEAT_CUSTOMER", "Is Repeat Customer"}}),
+				Typed = Table.TransformColumnTypes(Renamed, {{"Customer Key", type text}, {"Customer ID (Hashed)", type text}, {"Zip Code Prefix", type text}, {"City", type text}, {"State", type text}, {"First Order At", type datetime}, {"Last Order At", type datetime}, {"Lifetime Order Count", Int64.Type}, {"Is Repeat Customer", type logical}})
+			in
+				Typed
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

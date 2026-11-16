@@ -1,0 +1,136 @@
+table Date
+	lineageTag: efdadc6c-21ac-5ce5-940d-d793300a8ff1
+	dataCategory: Time
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: Short Date
+		lineageTag: f3f27ca1-e55b-5d68-8610-bcafb874a7c8
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: 6f3e7fc1-1da3-58cb-a1c9-39a5b435ae47
+		summarizeBy: none
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Quarter Number'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 4e0010bc-0e6a-55dc-ad28-84e02b7b829f
+		summarizeBy: none
+		sourceColumn: Quarter Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter
+		dataType: string
+		lineageTag: 1f38de15-e2b4-5811-8feb-cd5b56e7ef5e
+		summarizeBy: none
+		sourceColumn: Quarter
+		sortByColumn: 'Quarter Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Number'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: d14485d3-ce22-5fb2-8ebc-d55e286bb3e0
+		summarizeBy: none
+		sourceColumn: Month Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month
+		dataType: string
+		lineageTag: 51bbcea3-54e4-54d7-81b3-12cc76a32813
+		summarizeBy: none
+		sourceColumn: Month
+		sortByColumn: 'Month Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Year Month'
+		dataType: string
+		lineageTag: 4d00e066-b9bb-5d48-8e6f-f8c9e4cd3842
+		summarizeBy: none
+		sourceColumn: Year Month
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Start'
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 44e5c15e-097b-57d3-9f57-28d0102cfcda
+		summarizeBy: none
+		sourceColumn: Month Start
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'ISO Week'
+		dataType: int64
+		formatString: 0
+		lineageTag: ccda36ba-224e-508e-a76d-50e8fa7c6505
+		summarizeBy: none
+		sourceColumn: ISO Week
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Day of Week Number'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 66cb6033-f2e6-5d24-9f6a-88da191fd507
+		summarizeBy: none
+		sourceColumn: Day of Week Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column Day
+		dataType: string
+		lineageTag: 6a3db17c-8857-5609-b033-781191082a10
+		summarizeBy: none
+		sourceColumn: Day
+		sortByColumn: 'Day of Week Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Weekend'
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 4b9643a8-c1f5-57fa-b42b-af19c8137d6d
+		summarizeBy: none
+		sourceColumn: Is Weekend
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Date = m
+		mode: import
+		source =
+			let
+				Source = Snowflake.Databases(SnowflakeServer, SnowflakeWarehouse, [Role = "REPORTER", Implementation = "2.0"]),
+				Database = Source{[Name = "ANALYTICS_PROD", Kind = "Database"]}[Data],
+				Schema = Database{[Name = "MARTS", Kind = "Schema"]}[Data],
+				Data = Schema{[Name = "DIM_DATE", Kind = "Table"]}[Data],
+				Selected = Table.SelectColumns(Data, {"DATE_DAY", "YEAR_NUMBER", "QUARTER_NUMBER", "QUARTER_NAME", "MONTH_NUMBER", "MONTH_NAME", "YEAR_MONTH", "MONTH_START_DATE", "ISO_WEEK_NUMBER", "DAY_OF_WEEK_NUMBER", "DAY_NAME", "IS_WEEKEND"}),
+				Renamed = Table.RenameColumns(Selected, {{"DATE_DAY", "Date"}, {"YEAR_NUMBER", "Year"}, {"QUARTER_NUMBER", "Quarter Number"}, {"QUARTER_NAME", "Quarter"}, {"MONTH_NUMBER", "Month Number"}, {"MONTH_NAME", "Month"}, {"YEAR_MONTH", "Year Month"}, {"MONTH_START_DATE", "Month Start"}, {"ISO_WEEK_NUMBER", "ISO Week"}, {"DAY_OF_WEEK_NUMBER", "Day of Week Number"}, {"DAY_NAME", "Day"}, {"IS_WEEKEND", "Is Weekend"}}),
+				Typed = Table.TransformColumnTypes(Renamed, {{"Date", type date}, {"Year", Int64.Type}, {"Quarter Number", Int64.Type}, {"Quarter", type text}, {"Month Number", Int64.Type}, {"Month", type text}, {"Year Month", type text}, {"Month Start", type date}, {"ISO Week", Int64.Type}, {"Day of Week Number", Int64.Type}, {"Day", type text}, {"Is Weekend", type logical}})
+			in
+				Typed
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

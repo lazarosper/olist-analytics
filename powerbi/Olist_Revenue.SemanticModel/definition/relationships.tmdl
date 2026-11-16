@@ -1,0 +1,23 @@
+relationship 3aa294b1-33f2-55cf-bb2b-914383888ebd
+	fromColumn: 'Order Items'.'Customer Key'
+	toColumn: Customers.'Customer Key'
+
+relationship 9b1adfa8-703e-5eed-be4b-411c97c24536
+	fromColumn: 'Order Items'.'Product Key'
+	toColumn: Products.'Product Key'
+
+relationship bb3b1147-cb2a-5938-824b-09103a744839
+	fromColumn: 'Order Items'.'Seller Key'
+	toColumn: Sellers.'Seller Key'
+
+relationship a3ae38f6-a685-52cf-84fa-e9c5aab0fd27
+	fromColumn: 'Order Items'.'Order Date'
+	toColumn: Date.Date
+
+relationship 95e3a9c2-45bd-50ef-a4a9-5bb38c16dbeb
+	fromColumn: Orders.'Customer Key'
+	toColumn: Customers.'Customer Key'
+
+relationship 9d8440df-1628-5728-ab64-4797e87047fe
+	fromColumn: Orders.'Order Date'
+	toColumn: Date.Date

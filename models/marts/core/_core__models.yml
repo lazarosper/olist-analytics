@@ -185,3 +185,22 @@ models:
       - name: date_day
         description: Primary key.
         data_tests: [unique, not_null]
+
+exposures:
+  - name: olist_revenue_dashboard
+    label: Olist Revenue Dashboard
+    type: dashboard
+    maturity: high
+    description: >
+      Power BI report on net revenue: trend, mix by category and state, and the
+      effect of late deliveries on customer satisfaction. Reads ANALYTICS_PROD.MARTS
+      with the REPORTER role.
+    depends_on:
+      - ref('fct_order_items')
+      - ref('fct_orders')
+      - ref('dim_customers')
+      - ref('dim_products')
+      - ref('dim_sellers')
+      - ref('dim_date')
+    owner:
+      name: Lazaros Perperidis
