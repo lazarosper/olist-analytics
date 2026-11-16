@@ -1,0 +1,149 @@
+version: 2
+
+models:
+  - name: stg_olist__orders
+    description: One row per order, latest known state. Typed, renamed and deduplicated.
+    columns:
+      - name: order_id
+        description: Primary key.
+        data_tests: [unique, not_null]
+      - name: customer_id
+        description: Order-level customer id (the source creates a new one for every order).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__customers')
+                field: customer_id
+      - name: order_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [created, approved, invoiced, processing, shipped, delivered, canceled, unavailable]
+      - name: purchased_at
+        data_tests: [not_null]
+      - name: loaded_at
+        description: When this version of the order landed in RAW. Drives incremental models.
+        data_tests: [not_null]
+
+  - name: stg_olist__order_items
+    description: One row per item (line) of an order.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [order_id, order_item_number]
+    columns:
+      - name: order_item_key
+        description: Surrogate primary key, hash of order_id and order_item_id.
+        data_tests: [unique, not_null]
+      - name: order_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__orders')
+                field: order_id
+      - name: product_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__products')
+                field: product_id
+      - name: seller_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__sellers')
+                field: seller_id
+      - name: item_price
+        description: Price of the item in BRL, excluding freight.
+        data_tests: [not_null, not_negative]
+      - name: freight_value
+        description: Freight charged for the item in BRL.
+        data_tests: [not_null, not_negative]
+
+  - name: stg_olist__order_payments
+    description: One row per payment of an order.
+    columns:
+      - name: order_payment_key
+        description: Surrogate primary key, hash of order_id and payment_sequential.
+        data_tests: [unique, not_null]
+      - name: order_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__orders')
+                field: order_id
+      - name: payment_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [credit_card, boleto, voucher, debit_card, not_defined]
+      - name: payment_value
+        data_tests: [not_null, not_negative]
+
+  - name: stg_olist__order_reviews
+    description: >
+      One row per review per order. Contains free-text comments, which are
+      treated as sensitive and do not leave the staging layer.
+    columns:
+      - name: order_review_key
+        description: Surrogate primary key, hash of review_id and order_id.
+        data_tests: [unique, not_null]
+      - name: order_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__orders')
+                field: order_id
+      - name: review_score
+        description: Satisfaction score, 1 (worst) to 5 (best).
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 5
+      - name: review_comment_message
+        description: Free text written by the customer. Sensitive.
+        config:
+          meta: {contains_pii: true}
+
+  - name: stg_olist__customers
+    description: One row per order-level customer_id. The person identifier is pseudonymised here.
+    columns:
+      - name: customer_id
+        description: Primary key (one per order).
+        data_tests: [unique, not_null]
+      - name: customer_unique_id_hashed
+        description: Salted SHA-256 of the person identifier. Stable join key, not reversible.
+        data_tests: [not_null]
+        config:
+          meta: {contains_pii: true, protection: hashed}
+      - name: zip_code_prefix
+        description: First five digits of the customer's postcode. Sensitive (quasi-identifier).
+        config:
+          meta: {contains_pii: true}
+      - name: city
+        config:
+          meta: {contains_pii: true}
+      - name: state_code
+        data_tests: [not_null]
+
+  - name: stg_olist__products
+    description: One row per product.
+    columns:
+      - name: product_id
+        description: Primary key.
+        data_tests: [unique, not_null]
+
+  - name: stg_olist__sellers
+    description: One row per seller.
+    columns:
+      - name: seller_id
+        description: Primary key.
+        data_tests: [unique, not_null]

@@ -11,3 +11,14 @@ snapshot-paths: ["snapshots"]
 test-paths: ["tests"]
 analysis-paths: ["analyses"]
 clean-targets: ["target", "dbt_packages"]
+
+models:
+  olist_analytics:
+    # Silver: one view per source table. Cast, rename, deduplicate, hash PII.
+    staging:
+      +materialized: view
+      +schema: staging
+
+seeds:
+  olist_analytics:
+    +schema: seeds
