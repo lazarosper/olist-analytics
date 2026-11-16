@@ -1,3 +1,12 @@
+{{
+    config(
+        post_hook=[
+            "{{ apply_masking_policy('zip_code_prefix') }}",
+            "{{ apply_masking_policy('city') }}"
+        ]
+    )
+}}
+
 -- Grain: one row per person (customer_unique_id_hashed).
 -- The source creates a new customer_id for every order, so the same person
 -- appears many times in stg_olist__customers.  This dimension collapses them

@@ -19,6 +19,13 @@ vars:
   date_spine_start: "2016-01-01"
   date_spine_end: "2019-01-01"
 
+# Governance as code: masking policies exist before any model is built, and the
+# BI role gets schema access when (and only when) the marts have been built.
+on-run-start:
+  - "{{ create_masking_policies() }}"
+on-run-end:
+  - "{{ grant_marts_usage(schemas) }}"
+
 models:
   olist_analytics:
     # Silver: one view per source table. Cast, rename, deduplicate, hash PII.
@@ -29,10 +36,12 @@ models:
     intermediate:
       +materialized: view
       +schema: intermediate
-    # Gold: Kimball star schema. The only layer BI tools read.
+    # Gold: Kimball star schema. The only layer the REPORTER role can read.
     marts:
       +materialized: table
       +schema: marts
+      +grants:
+        select: ["REPORTER"]
 
 seeds:
   olist_analytics:
