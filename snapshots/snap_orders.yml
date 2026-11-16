@@ -1,0 +1,14 @@
+version: 2
+
+# Slowly changing dimension type 2 on orders.
+# The staging model only shows the LATEST state of an order.  This snapshot
+# keeps every state it has ever seen, with dbt_valid_from / dbt_valid_to, so
+# questions like "how long do orders stay in 'shipped'?" can be answered later.
+snapshots:
+  - name: snap_orders
+    description: History of every order (one row per order per version).
+    relation: ref('stg_olist__orders')
+    config:
+      unique_key: order_id
+      strategy: timestamp
+      updated_at: loaded_at
