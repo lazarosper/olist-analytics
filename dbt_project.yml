@@ -12,12 +12,27 @@ test-paths: ["tests"]
 analysis-paths: ["analyses"]
 clean-targets: ["target", "dbt_packages"]
 
+vars:
+  # Orders in these statuses never became a sale, so they earn no revenue.
+  non_revenue_order_statuses: ["canceled", "unavailable"]
+  # Range of the date dimension.
+  date_spine_start: "2016-01-01"
+  date_spine_end: "2019-01-01"
+
 models:
   olist_analytics:
     # Silver: one view per source table. Cast, rename, deduplicate, hash PII.
     staging:
       +materialized: view
       +schema: staging
+    # Silver: re-grain and combine staging models. Not exposed to BI.
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    # Gold: Kimball star schema. The only layer BI tools read.
+    marts:
+      +materialized: table
+      +schema: marts
 
 seeds:
   olist_analytics:

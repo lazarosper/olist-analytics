@@ -1,0 +1,186 @@
+version: 2
+
+models:
+  - name: fct_order_items
+    description: >
+      Sales fact at item grain (one row per item of an order). Incremental:
+      each run merges only the rows loaded since the previous run.
+      {{ doc('net_revenue') }}
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: order_item_key
+        description: Primary key. Hash of order_id and order_item_number.
+        data_type: varchar
+        constraints:
+          - type: not_null
+        data_tests: [unique, not_null]
+      - name: order_id
+        description: Degenerate dimension. Links to fct_orders.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_orders')
+                field: order_id
+      - name: order_item_number
+        description: Position of the item inside the order (1, 2, 3...).
+        data_type: number(38,0)
+      - name: customer_key
+        description: Foreign key to dim_customers.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_key
+      - name: product_key
+        description: Foreign key to dim_products.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_key
+      - name: seller_key
+        description: Foreign key to dim_sellers.
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_sellers')
+                field: seller_key
+      - name: order_date
+        description: Day the order was purchased. Foreign key to dim_date.
+        data_type: date
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+      - name: order_status
+        description: Latest status of the order the item belongs to.
+        data_type: varchar
+      - name: is_revenue_order
+        description: False when the order was canceled or unavailable.
+        data_type: boolean
+        data_tests: [not_null]
+      - name: item_price
+        description: Price of the item in BRL, excluding freight.
+        data_type: number(18,2)
+        data_tests: [not_null, not_negative]
+      - name: freight_value
+        description: Freight charged for the item in BRL.
+        data_type: number(18,2)
+        data_tests: [not_null, not_negative]
+      - name: net_revenue
+        description: "{{ doc('net_revenue') }}"
+        data_type: number(18,2)
+        data_tests: [not_null, not_negative]
+      - name: loaded_at
+        description: High-watermark column for the incremental merge.
+        data_type: timestamp_ntz
+        data_tests: [not_null]
+
+  - name: fct_orders
+    description: >
+      Order fact (one row per order) with money, payment, delivery performance
+      and review score side by side.
+    columns:
+      - name: order_id
+        description: Primary key.
+        data_tests: [unique, not_null]
+      - name: customer_key
+        description: Foreign key to dim_customers.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_key
+      - name: order_date
+        description: Day the order was purchased. Foreign key to dim_date.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+      - name: net_revenue
+        description: "{{ doc('net_revenue') }}"
+        data_tests: [not_null, not_negative]
+      - name: payment_total
+        description: Everything the customer paid for the order (items + freight), all payment methods.
+      - name: is_late_delivery
+        description: True when the order arrived after the promised date. NULL while not delivered.
+      - name: delivery_status
+        description: On time, Late or Not delivered.
+      - name: review_score
+        description: Latest satisfaction score for the order, 1 to 5. NULL when the customer did not answer.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 5
+
+  - name: dim_customers
+    description: >
+      One row per person. The identifier is hashed in staging.
+    columns:
+      - name: customer_key
+        description: Primary key. Hash of customer_unique_id_hashed.
+        data_tests: [unique, not_null]
+      - name: customer_unique_id_hashed
+        description: Salted SHA-256 of the source person identifier.
+        data_tests: [unique, not_null]
+        config:
+          meta: {contains_pii: true, protection: hashed}
+      - name: zip_code_prefix
+        description: Postcode prefix of the latest order.
+        config:
+          meta: {contains_pii: true}
+      - name: city
+        description: City of the latest order.
+        config:
+          meta: {contains_pii: true}
+      - name: state_code
+        description: Brazilian state (27 values). Coarse enough to stay readable for regional analysis.
+        data_tests: [not_null]
+      - name: lifetime_order_count
+        description: Number of revenue orders the customer has placed.
+      - name: is_repeat_customer
+        description: True when the customer has placed more than one revenue order.
+
+  - name: dim_products
+    description: One row per product, with the category translated to English.
+    columns:
+      - name: product_key
+        description: Primary key. Hash of product_id.
+        data_tests: [unique, not_null]
+      - name: product_id
+        data_tests: [unique, not_null]
+      - name: category_name
+        description: English category, falling back to the original name, then to Unknown.
+        data_tests: [not_null]
+
+  - name: dim_sellers
+    description: One row per marketplace seller.
+    columns:
+      - name: seller_key
+        description: Primary key. Hash of seller_id.
+        data_tests: [unique, not_null]
+      - name: seller_id
+        data_tests: [unique, not_null]
+
+  - name: dim_date
+    description: Calendar dimension, one row per day, generated with dbt_utils.date_spine.
+    columns:
+      - name: date_day
+        description: Primary key.
+        data_tests: [unique, not_null]
