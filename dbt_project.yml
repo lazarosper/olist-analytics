@@ -46,3 +46,7 @@ models:
 seeds:
   olist_analytics:
     +schema: seeds
+
+snapshots:
+  olist_analytics:
+    +schema: snapshots
