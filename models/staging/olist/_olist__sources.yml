@@ -1,0 +1,39 @@
+version: 2
+
+sources:
+  - name: olist
+    description: >
+      Olist marketplace (Brazilian e-commerce) source system, landed as-is in the
+      bronze layer by ingestion/load_raw.py.  Tables are append-only, every
+      column is VARCHAR, and each row carries audit columns (_source_file,
+      _file_row_number, _batch_id, _loaded_at).
+    database: raw
+    schema: olist
+    loader: ingestion/load_raw.py (PUT + COPY INTO)
+    # A new extract is expected every day.  Stale data warns instead of failing,
+    # so the pipeline keeps serving the last good state.
+    config:
+      loaded_at_field: _loaded_at
+      freshness:
+        warn_after: {count: 24, period: hour}
+    tables:
+      - name: orders
+        description: One row per order per extract. An order is re-sent when its status changes.
+        columns:
+          - name: order_id
+            data_tests: [not_null]
+      - name: order_items
+        description: One row per item (line) of an order.
+        columns:
+          - name: order_id
+            data_tests: [not_null]
+      - name: order_payments
+        description: One row per payment of an order. An order can be paid with several methods.
+      - name: order_reviews
+        description: Satisfaction survey answers. Contains free text written by customers.
+      - name: customers
+        description: One row per order-level customer_id, with the person-level customer_unique_id.
+      - name: products
+        description: Product catalogue with Portuguese category names.
+      - name: sellers
+        description: Marketplace sellers.
