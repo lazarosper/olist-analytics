@@ -1,0 +1,81 @@
+table Products
+	lineageTag: 0f838986-62b1-5534-b364-92eb8e9bec16
+
+	column 'Product Key'
+		dataType: string
+		isHidden
+		lineageTag: 63228680-da5f-54ab-82ab-d8bd6b27f67b
+		summarizeBy: none
+		sourceColumn: Product Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Product ID'
+		dataType: string
+		isHidden
+		lineageTag: 0d736ff2-929c-5c1a-9702-f5bdf2b2da7c
+		summarizeBy: none
+		sourceColumn: Product ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Category
+		dataType: string
+		lineageTag: ab53dd71-7460-5757-a054-110ef05fbf15
+		summarizeBy: none
+		sourceColumn: Category
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Category (Original)'
+		dataType: string
+		lineageTag: 61c0df17-8d28-5835-989c-7570b01b0806
+		summarizeBy: none
+		sourceColumn: Category (Original)
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Photo Count'
+		dataType: int64
+		formatString: 0
+		lineageTag: 6223a8d4-622e-5849-815d-ddb908c56ef2
+		summarizeBy: none
+		sourceColumn: Photo Count
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Weight (g)'
+		dataType: int64
+		formatString: 0
+		lineageTag: a52d8363-fde3-59db-8621-5b45245ffbd6
+		summarizeBy: none
+		sourceColumn: Weight (g)
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Volume (cm3)'
+		dataType: int64
+		formatString: 0
+		lineageTag: a6349422-e32c-5469-ba8d-d17d973c0177
+		summarizeBy: none
+		sourceColumn: Volume (cm3)
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Products = m
+		mode: import
+		source =
+			let
+				Source = Snowflake.Databases(SnowflakeServer, SnowflakeWarehouse, [Role = "REPORTER", Implementation = "2.0"]),
+				Database = Source{[Name = "ANALYTICS_PROD", Kind = "Database"]}[Data],
+				Schema = Database{[Name = "MARTS", Kind = "Schema"]}[Data],
+				Data = Schema{[Name = "DIM_PRODUCTS", Kind = "Table"]}[Data],
+				Selected = Table.SelectColumns(Data, {"PRODUCT_KEY", "PRODUCT_ID", "CATEGORY_NAME", "CATEGORY_NAME_ORIGINAL", "PHOTO_COUNT", "WEIGHT_G", "VOLUME_CM3"}),
+				Renamed = Table.RenameColumns(Selected, {{"PRODUCT_KEY", "Product Key"}, {"PRODUCT_ID", "Product ID"}, {"CATEGORY_NAME", "Category"}, {"CATEGORY_NAME_ORIGINAL", "Category (Original)"}, {"PHOTO_COUNT", "Photo Count"}, {"WEIGHT_G", "Weight (g)"}, {"VOLUME_CM3", "Volume (cm3)"}}),
+				Typed = Table.TransformColumnTypes(Renamed, {{"Product Key", type text}, {"Product ID", type text}, {"Category", type text}, {"Category (Original)", type text}, {"Photo Count", Int64.Type}, {"Weight (g)", Int64.Type}, {"Volume (cm3)", Int64.Type}})
+			in
+				Typed
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

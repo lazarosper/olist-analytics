@@ -1,0 +1,226 @@
+table Orders
+	lineageTag: 37f05d7a-04e1-5806-a6b0-d4ed26f8dcfe
+
+	column 'Order ID'
+		dataType: string
+		lineageTag: 5135bd2b-85f8-5aef-90db-764ded18cfa3
+		summarizeBy: none
+		sourceColumn: Order ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Customer Key'
+		dataType: string
+		isHidden
+		lineageTag: ff1ee560-2d53-5c96-8b0f-58337c34d15c
+		summarizeBy: none
+		sourceColumn: Customer Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Order Date'
+		dataType: dateTime
+		isHidden
+		formatString: Short Date
+		lineageTag: 8a4a8d29-066d-5a7b-8775-2444b199e9cb
+		summarizeBy: none
+		sourceColumn: Order Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Order Status'
+		dataType: string
+		lineageTag: 455ec748-f708-5e7c-b819-0f203b801793
+		summarizeBy: none
+		sourceColumn: Order Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Revenue Order'
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 4d8c7136-82d6-5117-a843-afba705018ef
+		summarizeBy: none
+		sourceColumn: Is Revenue Order
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Purchased At'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 5fede880-5cd3-54b9-a38a-b53d804b07c6
+		summarizeBy: none
+		sourceColumn: Purchased At
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Delivered At'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: a7f2094b-3866-5f3d-9509-0b071f6002b9
+		summarizeBy: none
+		sourceColumn: Delivered At
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Estimated Delivery Date'
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 8d43ff29-6c7d-5b67-8b87-9b8d00ee4f36
+		summarizeBy: none
+		sourceColumn: Estimated Delivery Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Item Count'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9a6860e4-088a-5763-a054-17c6e14ffd07
+		summarizeBy: none
+		sourceColumn: Item Count
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Items Amount'
+		dataType: decimal
+		isHidden
+		formatString: #,0.00
+		lineageTag: ef8ad26a-865a-5c96-961f-5fc552ebe61b
+		summarizeBy: none
+		sourceColumn: Items Amount
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Freight Amount'
+		dataType: decimal
+		isHidden
+		formatString: #,0.00
+		lineageTag: 36ea935f-2ee0-5c10-8b25-05d0af151ba7
+		summarizeBy: none
+		sourceColumn: Freight Amount
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Payment Total'
+		dataType: decimal
+		isHidden
+		formatString: #,0.00
+		lineageTag: e70b43ec-380d-52f4-80ec-7747b730dbe3
+		summarizeBy: none
+		sourceColumn: Payment Total
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Primary Payment Type'
+		dataType: string
+		lineageTag: 9bafbc6d-240a-563d-886d-5bc128e98067
+		summarizeBy: none
+		sourceColumn: Primary Payment Type
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Max Installments'
+		dataType: int64
+		formatString: 0
+		lineageTag: 5d09882e-fc60-54c0-b04a-40c49f98aa54
+		summarizeBy: none
+		sourceColumn: Max Installments
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Delivered'
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 7eb00266-123b-5d86-8b54-4e32cdb41cb5
+		summarizeBy: none
+		sourceColumn: Is Delivered
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Days To Deliver'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: cf562fc3-4ec0-531a-9cad-66bf28a64dcd
+		summarizeBy: none
+		sourceColumn: Days To Deliver
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Delivery Delay Days'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 66913ecd-34ac-5b4d-a984-13a07607a91c
+		summarizeBy: none
+		sourceColumn: Delivery Delay Days
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Late Delivery'
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: f99eb11b-8d81-5c75-ae45-ea9f90c6e763
+		summarizeBy: none
+		sourceColumn: Is Late Delivery
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Delivery Status'
+		dataType: string
+		lineageTag: 652f9a6a-ff13-521b-9a96-e9e3a641c2f6
+		summarizeBy: none
+		sourceColumn: Delivery Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Review Score'
+		dataType: int64
+		formatString: 0
+		lineageTag: dafbe64b-882f-5d2f-ab59-13e7c040eb30
+		summarizeBy: none
+		sourceColumn: Review Score
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Has Review Comment'
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 600b82e6-7d7a-56a0-8d32-59cfd4ca968a
+		summarizeBy: none
+		sourceColumn: Has Review Comment
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Net Revenue'
+		dataType: decimal
+		isHidden
+		formatString: #,0.00
+		lineageTag: 23779387-a409-5924-931d-29c54422625d
+		summarizeBy: none
+		sourceColumn: Net Revenue
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Orders = m
+		mode: import
+		source =
+			let
+				Source = Snowflake.Databases(SnowflakeServer, SnowflakeWarehouse, [Role = "REPORTER", Implementation = "2.0"]),
+				Database = Source{[Name = "ANALYTICS_PROD", Kind = "Database"]}[Data],
+				Schema = Database{[Name = "MARTS", Kind = "Schema"]}[Data],
+				Data = Schema{[Name = "FCT_ORDERS", Kind = "Table"]}[Data],
+				Selected = Table.SelectColumns(Data, {"ORDER_ID", "CUSTOMER_KEY", "ORDER_DATE", "ORDER_STATUS", "IS_REVENUE_ORDER", "PURCHASED_AT", "DELIVERED_AT", "ESTIMATED_DELIVERY_DATE", "ITEM_COUNT", "ITEMS_AMOUNT", "FREIGHT_AMOUNT", "PAYMENT_TOTAL", "PRIMARY_PAYMENT_TYPE", "MAX_INSTALLMENTS", "IS_DELIVERED", "DAYS_TO_DELIVER", "DELIVERY_DELAY_DAYS", "IS_LATE_DELIVERY", "DELIVERY_STATUS", "REVIEW_SCORE", "HAS_REVIEW_COMMENT", "NET_REVENUE"}),
+				Renamed = Table.RenameColumns(Selected, {{"ORDER_ID", "Order ID"}, {"CUSTOMER_KEY", "Customer Key"}, {"ORDER_DATE", "Order Date"}, {"ORDER_STATUS", "Order Status"}, {"IS_REVENUE_ORDER", "Is Revenue Order"}, {"PURCHASED_AT", "Purchased At"}, {"DELIVERED_AT", "Delivered At"}, {"ESTIMATED_DELIVERY_DATE", "Estimated Delivery Date"}, {"ITEM_COUNT", "Item Count"}, {"ITEMS_AMOUNT", "Items Amount"}, {"FREIGHT_AMOUNT", "Freight Amount"}, {"PAYMENT_TOTAL", "Payment Total"}, {"PRIMARY_PAYMENT_TYPE", "Primary Payment Type"}, {"MAX_INSTALLMENTS", "Max Installments"}, {"IS_DELIVERED", "Is Delivered"}, {"DAYS_TO_DELIVER", "Days To Deliver"}, {"DELIVERY_DELAY_DAYS", "Delivery Delay Days"}, {"IS_LATE_DELIVERY", "Is Late Delivery"}, {"DELIVERY_STATUS", "Delivery Status"}, {"REVIEW_SCORE", "Review Score"}, {"HAS_REVIEW_COMMENT", "Has Review Comment"}, {"NET_REVENUE", "Net Revenue"}}),
+				Typed = Table.TransformColumnTypes(Renamed, {{"Order ID", type text}, {"Customer Key", type text}, {"Order Date", type date}, {"Order Status", type text}, {"Is Revenue Order", type logical}, {"Purchased At", type datetime}, {"Delivered At", type datetime}, {"Estimated Delivery Date", type date}, {"Item Count", Int64.Type}, {"Items Amount", Currency.Type}, {"Freight Amount", Currency.Type}, {"Payment Total", Currency.Type}, {"Primary Payment Type", type text}, {"Max Installments", Int64.Type}, {"Is Delivered", type logical}, {"Days To Deliver", Int64.Type}, {"Delivery Delay Days", Int64.Type}, {"Is Late Delivery", type logical}, {"Delivery Status", type text}, {"Review Score", Int64.Type}, {"Has Review Comment", type logical}, {"Net Revenue", Currency.Type}})
+			in
+				Typed
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

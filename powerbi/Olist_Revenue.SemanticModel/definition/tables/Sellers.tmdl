@@ -1,0 +1,54 @@
+table Sellers
+	lineageTag: 3b10da3c-0554-54a5-a583-506ff6774795
+
+	column 'Seller Key'
+		dataType: string
+		isHidden
+		lineageTag: c65405a2-7f20-5e34-aecd-b9b1a19feee9
+		summarizeBy: none
+		sourceColumn: Seller Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Seller ID'
+		dataType: string
+		isHidden
+		lineageTag: 3afebfe6-9810-58b9-b86f-5fef199dfdc1
+		summarizeBy: none
+		sourceColumn: Seller ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Seller City'
+		dataType: string
+		lineageTag: 58f23380-9a0b-5c94-be5f-9efd9d586a25
+		summarizeBy: none
+		sourceColumn: Seller City
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Seller State'
+		dataType: string
+		lineageTag: 6d7b058c-df04-576b-98a4-eb6a100a14f0
+		summarizeBy: none
+		sourceColumn: Seller State
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Sellers = m
+		mode: import
+		source =
+			let
+				Source = Snowflake.Databases(SnowflakeServer, SnowflakeWarehouse, [Role = "REPORTER", Implementation = "2.0"]),
+				Database = Source{[Name = "ANALYTICS_PROD", Kind = "Database"]}[Data],
+				Schema = Database{[Name = "MARTS", Kind = "Schema"]}[Data],
+				Data = Schema{[Name = "DIM_SELLERS", Kind = "Table"]}[Data],
+				Selected = Table.SelectColumns(Data, {"SELLER_KEY", "SELLER_ID", "CITY", "STATE_CODE"}),
+				Renamed = Table.RenameColumns(Selected, {{"SELLER_KEY", "Seller Key"}, {"SELLER_ID", "Seller ID"}, {"CITY", "Seller City"}, {"STATE_CODE", "Seller State"}}),
+				Typed = Table.TransformColumnTypes(Renamed, {{"Seller Key", type text}, {"Seller ID", type text}, {"Seller City", type text}, {"Seller State", type text}})
+			in
+				Typed
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

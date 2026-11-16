@@ -1,0 +1,142 @@
+table 'Order Items'
+	lineageTag: 96376062-bd33-5ab0-9f42-eb41cada57ce
+
+	column 'Order Item Key'
+		dataType: string
+		isHidden
+		lineageTag: d363c00b-36c5-54c3-b3cd-0396e82cb21e
+		summarizeBy: none
+		sourceColumn: Order Item Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Order ID'
+		dataType: string
+		lineageTag: a1d44537-11d9-507c-ab7a-7130d9b3f700
+		summarizeBy: none
+		sourceColumn: Order ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Order Item Number'
+		dataType: int64
+		formatString: 0
+		lineageTag: 4d19e03e-4788-546b-8062-977bb924220f
+		summarizeBy: none
+		sourceColumn: Order Item Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Customer Key'
+		dataType: string
+		isHidden
+		lineageTag: 98bc11d3-8cb6-58a5-9b9b-c33e7d58a21a
+		summarizeBy: none
+		sourceColumn: Customer Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Product Key'
+		dataType: string
+		isHidden
+		lineageTag: 1cff522c-8fa9-590b-bb1f-40157676351a
+		summarizeBy: none
+		sourceColumn: Product Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Seller Key'
+		dataType: string
+		isHidden
+		lineageTag: 2be152cf-761e-50cb-ac0b-20545b97b412
+		summarizeBy: none
+		sourceColumn: Seller Key
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Order Date'
+		dataType: dateTime
+		isHidden
+		formatString: Short Date
+		lineageTag: 20bdb221-0256-5579-a968-59a127955b11
+		summarizeBy: none
+		sourceColumn: Order Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Order Status'
+		dataType: string
+		lineageTag: 89383858-96a3-51a8-914e-3fe6f30c0c5e
+		summarizeBy: none
+		sourceColumn: Order Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Revenue Order'
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 9d95644f-f289-5287-8325-de364fa9bf72
+		summarizeBy: none
+		sourceColumn: Is Revenue Order
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Item Price'
+		dataType: decimal
+		isHidden
+		formatString: #,0.00
+		lineageTag: a01473c9-7dfc-5277-9980-a54d0861ecd3
+		summarizeBy: none
+		sourceColumn: Item Price
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Freight Value'
+		dataType: decimal
+		isHidden
+		formatString: #,0.00
+		lineageTag: 47df0655-8c9e-5c3a-abc4-551a9aaf6e07
+		summarizeBy: none
+		sourceColumn: Freight Value
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Net Revenue'
+		dataType: decimal
+		isHidden
+		formatString: #,0.00
+		lineageTag: 4302683a-3a24-5213-bbc6-3b47a1fac6aa
+		summarizeBy: none
+		sourceColumn: Net Revenue
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Loaded At'
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		lineageTag: f33687d8-5ae9-5ff5-892d-aa1286b23cce
+		summarizeBy: none
+		sourceColumn: Loaded At
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Order Items' = m
+		mode: import
+		source =
+			let
+				Source = Snowflake.Databases(SnowflakeServer, SnowflakeWarehouse, [Role = "REPORTER", Implementation = "2.0"]),
+				Database = Source{[Name = "ANALYTICS_PROD", Kind = "Database"]}[Data],
+				Schema = Database{[Name = "MARTS", Kind = "Schema"]}[Data],
+				Data = Schema{[Name = "FCT_ORDER_ITEMS", Kind = "Table"]}[Data],
+				Selected = Table.SelectColumns(Data, {"ORDER_ITEM_KEY", "ORDER_ID", "ORDER_ITEM_NUMBER", "CUSTOMER_KEY", "PRODUCT_KEY", "SELLER_KEY", "ORDER_DATE", "ORDER_STATUS", "IS_REVENUE_ORDER", "ITEM_PRICE", "FREIGHT_VALUE", "NET_REVENUE", "LOADED_AT"}),
+				Renamed = Table.RenameColumns(Selected, {{"ORDER_ITEM_KEY", "Order Item Key"}, {"ORDER_ID", "Order ID"}, {"ORDER_ITEM_NUMBER", "Order Item Number"}, {"CUSTOMER_KEY", "Customer Key"}, {"PRODUCT_KEY", "Product Key"}, {"SELLER_KEY", "Seller Key"}, {"ORDER_DATE", "Order Date"}, {"ORDER_STATUS", "Order Status"}, {"IS_REVENUE_ORDER", "Is Revenue Order"}, {"ITEM_PRICE", "Item Price"}, {"FREIGHT_VALUE", "Freight Value"}, {"NET_REVENUE", "Net Revenue"}, {"LOADED_AT", "Loaded At"}}),
+				Typed = Table.TransformColumnTypes(Renamed, {{"Order Item Key", type text}, {"Order ID", type text}, {"Order Item Number", Int64.Type}, {"Customer Key", type text}, {"Product Key", type text}, {"Seller Key", type text}, {"Order Date", type date}, {"Order Status", type text}, {"Is Revenue Order", type logical}, {"Item Price", Currency.Type}, {"Freight Value", Currency.Type}, {"Net Revenue", Currency.Type}, {"Loaded At", type datetime}})
+			in
+				Typed
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
