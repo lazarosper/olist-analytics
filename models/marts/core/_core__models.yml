@@ -131,7 +131,8 @@ models:
 
   - name: dim_customers
     description: >
-      One row per person. The identifier is hashed in staging.
+      One row per person. The identifier is hashed in staging; zip_code_prefix
+      and city carry a dynamic masking policy and are only readable by PII_READER.
     columns:
       - name: customer_key
         description: Primary key. Hash of customer_unique_id_hashed.
@@ -142,13 +143,13 @@ models:
         config:
           meta: {contains_pii: true, protection: hashed}
       - name: zip_code_prefix
-        description: Postcode prefix of the latest order.
+        description: Postcode prefix of the latest order. Masked for every role except PII_READER.
         config:
-          meta: {contains_pii: true}
+          meta: {contains_pii: true, protection: masking_policy}
       - name: city
-        description: City of the latest order.
+        description: City of the latest order. Masked for every role except PII_READER.
         config:
-          meta: {contains_pii: true}
+          meta: {contains_pii: true, protection: masking_policy}
       - name: state_code
         description: Brazilian state (27 values). Coarse enough to stay readable for regional analysis.
         data_tests: [not_null]
