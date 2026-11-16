@@ -1,0 +1,37 @@
+[sqlfluff]
+dialect = snowflake
+templater = dbt
+max_line_length = 120
+# RF02: we deliberately leave columns unqualified in single-table selects
+# ST06: column order follows meaning (keys, attributes, measures), not complexity
+# AM04: staging models use select * from the previous CTE on purpose
+exclude_rules = RF02, ST06, AM04
+
+[sqlfluff:templater:dbt]
+project_dir = .
+profiles_dir = .
+
+[sqlfluff:indentation]
+tab_space_size = 4
+indent_unit = space
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.identifiers]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.literals]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.types]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:aliasing.table]
+aliasing = explicit
+
+[sqlfluff:rules:aliasing.column]
+aliasing = explicit

@@ -1,0 +1,31 @@
+# dbt
+target/
+dbt_packages/
+logs/
+.user.yml
+
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# data never goes to git: raw extracts live in the warehouse
+data/
+
+# secrets and local environment
+.env
+*.p8
+*.pem
+env.ps1
+
+# Power BI local cache
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# local scratch
+.scratch/

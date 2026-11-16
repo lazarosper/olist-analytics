@@ -1,0 +1,96 @@
+name: Deploy to production
+
+# Continuous deployment: main is always what runs in production.
+#
+#   push to main   a pull request was merged -> build and test ANALYTICS_PROD
+#   schedule       daily run, picks up new raw data (incremental models only
+#                  process rows loaded since the previous run)
+#   manual         "Run workflow" button, with an optional full refresh
+#
+# Order inside a run: source freshness -> snapshot/build/test (dbt build runs
+# them in dependency order and skips everything downstream of a failed test).
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "powerbi/**"
+  schedule:
+    - cron: "0 5 * * *" # 05:00 UTC every day
+  workflow_dispatch:
+    inputs:
+      full_refresh:
+        description: "Rebuild incremental models from scratch"
+        type: boolean
+        default: false
+
+# never run two production builds at the same time
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DBT_TARGET: prod
+  SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+  SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+  SNOWFLAKE_PRIVATE_KEY_PATH: ${{ github.workspace }}/.snowflake_key.p8
+  OLIST_PII_SALT: ${{ secrets.OLIST_PII_SALT }}
+  PYTHONWARNINGS: ignore
+
+jobs:
+  dbt-deploy:
+    name: Build and test production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dbt
+        run: pip install -r requirements.txt
+
+      - name: Write the Snowflake private key from the secret
+        env:
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+        run: |
+          printf '%s\n' "$SNOWFLAKE_PRIVATE_KEY" > "$SNOWFLAKE_PRIVATE_KEY_PATH"
+          chmod 600 "$SNOWFLAKE_PRIVATE_KEY_PATH"
+
+      - name: Install dbt packages
+        run: dbt deps
+
+      - name: Check source freshness
+        run: dbt source freshness
+
+      - name: Build and test
+        run: dbt build ${{ inputs.full_refresh && '--full-refresh' || '' }}
+
+      - name: Generate documentation
+        run: dbt docs generate
+
+      - name: Keep run artifacts (manifest, run results, docs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-artifacts-${{ github.run_number }}
+          path: |
+            target/manifest.json
+            target/run_results.json
+            target/sources.json
+            target/catalog.json
+            target/index.html
+          retention-days: 14
+
+      - name: Remove the private key
+        if: always()
+        run: rm -f "$SNOWFLAKE_PRIVATE_KEY_PATH"

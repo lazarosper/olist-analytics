@@ -1,0 +1,74 @@
+name: CI
+
+# Runs on every pull request to main, before the change can reach production.
+#
+#   1. lint        sqlfluff on every SQL file of the dbt project
+#   2. dbt build   builds and tests the whole project in an isolated schema,
+#                  ANALYTICS_CI.PR_<number>_*, then drops it
+#
+# Production is never touched by a pull request.
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "powerbi/**"
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DBT_TARGET: ci
+  DBT_CI_SCHEMA: PR_${{ github.event.pull_request.number }}
+  SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+  SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+  SNOWFLAKE_PRIVATE_KEY_PATH: ${{ github.workspace }}/.snowflake_key.p8
+  OLIST_PII_SALT: ${{ secrets.OLIST_PII_SALT }}
+  PYTHONWARNINGS: ignore
+
+jobs:
+  dbt-ci:
+    name: Lint, build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dbt and sqlfluff
+        run: pip install -r requirements.txt
+
+      - name: Write the Snowflake private key from the secret
+        env:
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+        run: |
+          printf '%s\n' "$SNOWFLAKE_PRIVATE_KEY" > "$SNOWFLAKE_PRIVATE_KEY_PATH"
+          chmod 600 "$SNOWFLAKE_PRIVATE_KEY_PATH"
+
+      - name: Install dbt packages
+        run: dbt deps
+
+      - name: Lint SQL
+        run: sqlfluff lint .
+
+      - name: Build and test in the PR schema
+        run: dbt build --fail-fast
+
+      - name: Drop the PR schemas
+        if: always()
+        run: |
+          dbt run-operation drop_pr_schemas --args "{prefix: $DBT_CI_SCHEMA}"
+
+      - name: Remove the private key
+        if: always()
+        run: rm -f "$SNOWFLAKE_PRIVATE_KEY_PATH"

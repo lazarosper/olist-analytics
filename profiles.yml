@@ -1,0 +1,45 @@
+# Connection profile. Committed on purpose: it contains no secrets.
+# Everything sensitive comes from environment variables (locally: user env vars,
+# in GitHub Actions: repository secrets). Auth is key-pair, never a password.
+olist_analytics:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+
+    # Developer sandbox: ANALYTICS_DEV.DBT_<NAME>_<LAYER>
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      role: TRANSFORMER
+      warehouse: TRANSFORMING_WH
+      database: ANALYTICS_DEV
+      schema: "{{ env_var('DBT_DEV_SCHEMA', 'DBT_LAZAROS') }}"
+      threads: 8
+      query_tag: dbt_olist_dev
+
+    # Pull-request builds: ANALYTICS_CI.PR_<NUMBER>_<LAYER>, dropped after the run
+    ci:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      role: TRANSFORMER
+      warehouse: TRANSFORMING_WH
+      database: ANALYTICS_CI
+      schema: "{{ env_var('DBT_CI_SCHEMA', 'CI') }}"
+      threads: 8
+      query_tag: dbt_olist_ci
+
+    # Production: ANALYTICS_PROD.<LAYER>. Only the deploy workflow targets this.
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      role: TRANSFORMER
+      warehouse: TRANSFORMING_WH
+      database: ANALYTICS_PROD
+      schema: ANALYTICS
+      threads: 8
+      query_tag: dbt_olist_prod

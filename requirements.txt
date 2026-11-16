@@ -1,0 +1,6 @@
+dbt-core==1.12.7
+dbt-snowflake==1.12.5
+sqlfluff==4.5.0
+sqlfluff-templater-dbt==4.5.0
+duckdb==2.0.0
+pre-commit>=4.0
