@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: int_order_items__aggregated_to_order
+    description: Items collapsed to one row per order (counts and amounts).
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+
+  - name: int_order_payments__aggregated_to_order
+    description: Payments collapsed to one row per order.
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: primary_payment_type
+        description: Payment method that covered the largest share of the order.
+
+  - name: int_order_reviews__latest_per_order
+    description: The most recent review of each order. Comment text is reduced to a yes/no flag.
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+
+  - name: int_orders__delivery_metrics
+    description: Delivery performance rules (delivered, days to deliver, late or on time) per order.
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: delivery_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["On time", "Late", "Not delivered"]
+
+unit_tests:
+  - name: test_delivery_is_late_only_after_the_promised_date
+    description: >
+      Late means delivered on a later calendar day than promised. Delivered on
+      the promised day is on time; an undelivered order is neither.
+    model: int_orders__delivery_metrics
+    given:
+      - input: ref('stg_olist__orders')
+        rows:
+          - {order_id: early, purchased_at: "2018-01-01 10:00:00", delivered_at: "2018-01-05 09:00:00", estimated_delivery_date: "2018-01-10"}
+          - {order_id: same_day, purchased_at: "2018-01-01 10:00:00", delivered_at: "2018-01-10 23:59:00", estimated_delivery_date: "2018-01-10"}
+          - {order_id: late, purchased_at: "2018-01-01 10:00:00", delivered_at: "2018-01-12 08:00:00", estimated_delivery_date: "2018-01-10"}
+          - {order_id: in_transit, purchased_at: "2018-01-01 10:00:00", delivered_at: null, estimated_delivery_date: "2018-01-10"}
+    expect:
+      rows:
+        - {order_id: early, is_delivered: true, days_to_deliver: 4, delivery_delay_days: -5, is_late_delivery: false, delivery_status: "On time"}
+        - {order_id: same_day, is_delivered: true, days_to_deliver: 9, delivery_delay_days: 0, is_late_delivery: false, delivery_status: "On time"}
+        - {order_id: late, is_delivered: true, days_to_deliver: 11, delivery_delay_days: 2, is_late_delivery: true, delivery_status: "Late"}
+        - {order_id: in_transit, is_delivered: false, days_to_deliver: null, delivery_delay_days: null, is_late_delivery: null, delivery_status: "Not delivered"}
+
+  - name: test_primary_payment_type_is_the_largest_payment
+    model: int_order_payments__aggregated_to_order
+    given:
+      - input: ref('stg_olist__order_payments')
+        rows:
+          - {order_id: o1, payment_sequence: 1, payment_type: voucher, payment_installments: 1, payment_value: 20.00}
+          - {order_id: o1, payment_sequence: 2, payment_type: credit_card, payment_installments: 3, payment_value: 80.00}
+    expect:
+      rows:
+        - {order_id: o1, payment_count: 2, payment_total: 100.00, max_installments: 3, primary_payment_type: credit_card}
