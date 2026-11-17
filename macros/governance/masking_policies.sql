@@ -19,7 +19,7 @@
         end
 {%- endmacro %}
 
-{% macro apply_masking_policy(column) -%}
+{% macro apply_masking_policy(column, policy='mask_pii_string') -%}
     alter table {{ this }} modify column {{ column }}
-        set masking policy {{ target.database }}.governance.mask_pii_string force
+        set masking policy {{ target.database }}.governance.{{ policy }} force
 {%- endmacro %}
