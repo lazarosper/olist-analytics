@@ -1,5 +1,9 @@
 {{
     config(
+        pre_hook=[
+            "create schema if not exists {{ target.database }}.governance",
+            "{{ create_masking_policy() }}"
+        ],
         post_hook=[
             "{{ apply_masking_policy('zip_code_prefix') }}",
             "{{ apply_masking_policy('city') }}"

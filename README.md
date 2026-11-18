@@ -59,7 +59,7 @@ powerbi/              the report (PBIP format, text files, versioned like code)
 | Layered modelling (medallion + Kimball) | `models/`, [docs/architecture.md](docs/architecture.md) |
 | Incremental model | [models/marts/core/fct_order_items.sql](models/marts/core/fct_order_items.sql) |
 | Deduplication | [macros/utils/deduplicate_latest.sql](macros/utils/deduplicate_latest.sql), used by every staging model |
-| Macros | `macros/` (8 macro files) |
+| Macros | `macros/` (6 short macro files) |
 | Snapshot (SCD2) | [snapshots/snap_orders.yml](snapshots/snap_orders.yml) |
 | Data tests | `_*.yml` files next to the models, `tests/` |
 | Unit tests | [models/intermediate/_int__models.yml](models/intermediate/_int__models.yml) |
@@ -67,6 +67,7 @@ powerbi/              the report (PBIP format, text files, versioned like code)
 | Source freshness | [models/staging/olist/_olist__sources.yml](models/staging/olist/_olist__sources.yml) |
 | Hashing of identifiers | [macros/governance/hash_pii.sql](macros/governance/hash_pii.sql) |
 | Dynamic masking | [macros/governance/masking_policies.sql](macros/governance/masking_policies.sql), `dim_customers` |
+| Hooks | pre- and post-hooks on `dim_customers` (masking), post-hook on the marts in `dbt_project.yml` (schema access) |
 | Access control (RBAC) | [infra/snowflake/01_account_setup.sql](infra/snowflake/01_account_setup.sql), `grants` in `dbt_project.yml` |
 | CI/CD | [.github/workflows/](.github/workflows/) |
 
@@ -150,6 +151,9 @@ everything downstream of it from being rebuilt on bad data.
 
 ```bash
 python ingestion/load_raw.py --batch 1 --reset               # RAW back to the first extract
-dbt run-operation drop_snapshots --args '{confirm: true}'    # snapshots are not rebuilt by --full-refresh
 dbt build --full-refresh
 ```
+
+Snapshots hold history, so `--full-refresh` does not rebuild them. To restart the
+history as well, drop the table in Snowflake before the build:
+`drop table if exists analytics_dev.dbt_<name>_snapshots.snap_orders;`

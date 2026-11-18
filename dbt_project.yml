@@ -19,13 +19,6 @@ vars:
   date_spine_start: "2016-01-01"
   date_spine_end: "2019-01-01"
 
-# Governance as code: masking policies exist before any model is built, and the
-# BI role gets schema access when (and only when) the marts have been built.
-on-run-start:
-  - "{{ create_masking_policies() }}"
-on-run-end:
-  - "{{ grant_marts_usage(schemas) }}"
-
 models:
   olist_analytics:
     # Silver: one view per source table. Cast, rename, deduplicate, hash PII.
@@ -40,8 +33,11 @@ models:
     marts:
       +materialized: table
       +schema: marts
+      # Access for the BI role: SELECT on every mart (grants) plus USAGE on the
+      # schema, which Snowflake also needs and dbt grants do not cover (post-hook).
       +grants:
         select: ["REPORTER"]
+      +post-hook: "grant usage on schema {{ this.database }}.{{ this.schema }} to role reporter"
 
 seeds:
   olist_analytics:
